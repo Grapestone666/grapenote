@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GrapeNote</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="widget-container" id="widgetContainer">
+
+    <div class="titlebar" id="titlebar">
+      <div class="titlebar-actions">
+        <button class="tb-btn" id="btnAdd" title="添加任务">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <line x1="6" y1="2" x2="6" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            <line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="tb-btn" id="btnSettings" title="设置">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M5 .8h2l.3 1.2c.2.1.5.2.7.4l1.2-.4 1 1.7-1 .9c0 .2.1.3.1.5v.3l1 .9-1 1.7-1.2-.4c-.2.2-.5.3-.7.4L7 11.2H5l-.3-1.3c-.2-.1-.5-.2-.7-.4l-1.2.4-1-1.7 1-.9c0-.1-.1-.3-.1-.5v-.2l-1-.9 1-1.7 1.2.4c.2-.2.5-.3.7-.4L5 .8z"
+                  stroke="currentColor" stroke-width="1" fill="none"/>
+            <circle cx="6" cy="6" r="1.5" stroke="currentColor" stroke-width="1" fill="none"/>
+          </svg>
+        </button>
+        <button class="tb-btn" id="btnLock" title="锁定位置和大小">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <rect x="2" y="5" width="8" height="6" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <path d="M4 5V3.5a2 2 0 0 1 4 0V5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="task-list-container" id="taskListContainer">
+      <div class="task-list" id="taskList"></div>
+      <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-icon">☕</div>
+        <div class="empty-text">没有任务，享受当下</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 设置面板（只用鼠标交互，不需要键盘，保留在主窗口内） -->
+  <div class="settings-overlay" id="settingsOverlay" style="display: none;">
+    <div class="settings-panel">
+      <div class="settings-header">
+        <span>设置</span>
+        <button class="settings-close" id="settingsClose">✕</button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-section-title">外观</div>
+        <div class="setting-item"><label>背景颜色</label><input type="color" class="setting-color" id="settingBgColor" value="#000000"></div>
+        <div class="setting-item"><label>背景透明度</label><div class="setting-range-row"><input type="range" class="setting-range" id="settingBgOpacity" min="0" max="100" value="30"><span class="setting-range-value" id="opacityValue">30%</span></div></div>
+        <div class="setting-item"><label>文字颜色</label><input type="color" class="setting-color" id="settingTextColor" value="#FFFFFF"></div>
+        <div class="setting-item"><label>字体</label><select class="setting-select" id="settingFontFamily"><option value="'Segoe UI Variable', 'Segoe UI', 'Microsoft YaHei UI', sans-serif">默认</option><option value="'Microsoft YaHei', sans-serif">微软雅黑</option><option value="'SimSun', serif">宋体</option><option value="'KaiTi', serif">楷体</option><option value="'Consolas', 'Courier New', monospace">Consolas</option><option value="'Arial', sans-serif">Arial</option></select></div>
+        <div class="setting-item"><label>字体大小</label><div class="setting-range-row"><input type="range" class="setting-range" id="settingFontSize" min="11" max="20" value="13"><span class="setting-range-value" id="fontSizeValue">13px</span></div></div>
+        <div class="setting-item"><label>窗口圆角</label><div class="corner-toggle"><button class="corner-btn active" id="cornerRound">圆角</button><button class="corner-btn" id="cornerSquare">直角</button></div></div>
+        <div class="settings-section-title">系统</div>
+        <div class="setting-item"><label>开机自启动</label><label class="toggle-switch"><input type="checkbox" id="settingAutoStart"><span class="toggle-slider"></span></label></div>
+        <div class="setting-item"><label>硬件加速</label><label class="toggle-switch"><input type="checkbox" id="settingHwAccel" checked><span class="toggle-slider"></span></label></div>
+        <div class="setting-hint" id="hwAccelHint" style="display:none;">需要重启应用生效</div>
+        <div class="settings-section-title">数据</div>
+        <div class="setting-item"><label>导出已完成记录</label><button class="setting-action-btn" id="btnExportCSV">CSV</button></div>
+        <div class="setting-item"><label>导出配置与数据</label><button class="setting-action-btn" id="btnExportConfig">导出</button></div>
+        <div class="setting-item"><label>导入配置与数据</label><button class="setting-action-btn" id="btnImportConfig">导入</button></div>
+        <div class="settings-section-title">配置文件</div>
+        <div class="config-path-display" id="configPathDisplay">—</div>
+        <div class="setting-item"><label>更改路径</label><div class="setting-btn-group"><button class="setting-action-btn" id="btnSetConfigPath">选择</button><button class="setting-action-btn" id="btnResetConfigPath">默认</button></div></div>
+        <div class="settings-version">GrapeNote v1.1.2</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右键菜单 -->
+  <div class="context-menu" id="contextMenu" style="display: none;">
+    <div class="context-menu-item" id="ctxEdit">编辑</div>
+    <div class="context-menu-item ctx-danger" id="ctxDelete">删除</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

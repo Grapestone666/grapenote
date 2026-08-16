@@ -1,0 +1,31 @@
+{
+  "name": "grapenote",
+  "version": "1.1.2",
+  "description": "Desktop widget for task management",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "author": "Grape",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.grape.grapenote",
+    "productName": "GrapeNote",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "extraResources": [
+      { "from": "embed-helper.cs", "to": "embed-helper.cs" }
+    ]
+  }
+}

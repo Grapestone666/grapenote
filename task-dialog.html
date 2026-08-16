@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>GrapeNote</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI Variable', 'Segoe UI', 'Microsoft YaHei UI', sans-serif;
+  font-size: 13px; color: #E0E0E0;
+  background: #2A2A2A; border-radius: 10px;
+  overflow: hidden; user-select: none;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px 8px; font-size: 14px; font-weight: 600;
+  -webkit-app-region: drag;
+}
+.close-btn {
+  width: 24px; height: 24px; border: none; background: transparent;
+  color: #888; cursor: pointer; border-radius: 4px; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-app-region: no-drag;
+}
+.close-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.body { padding: 0 14px 10px; }
+.form-group { margin-bottom: 8px; }
+.form-group label { display: block; font-size: 11px; color: #888; margin-bottom: 3px; }
+.form-row { display: flex; gap: 8px; }
+.form-group.half { flex: 1; }
+input, select, textarea {
+  width: 100%; padding: 6px 8px;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+  background: rgba(255,255,255,0.06); color: #E0E0E0;
+  font-family: inherit; font-size: 12px; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: #0078D4; }
+select option { background: #2A2A2A; color: #fff; }
+textarea { resize: vertical; min-height: 40px; }
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+.weekday-buttons { display: flex; gap: 3px; margin-top: 4px; }
+.weekday-btn {
+  width: 32px; height: 28px; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px; background: rgba(255,255,255,0.06); color: #888;
+  font-size: 11px; cursor: pointer;
+}
+.weekday-btn:hover { border-color: #0078D4; color: #0078D4; }
+.weekday-btn.selected { background: #0078D4; color: white; border-color: #0078D4; }
+.recurring-options { margin-top: 4px; margin-bottom: 8px; }
+.footer { display: flex; gap: 8px; padding: 4px 14px 14px; }
+.btn {
+  flex: 1; height: 32px; border: none; border-radius: 6px;
+  font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.btn-primary { background: #0078D4; color: white; }
+.btn-primary:hover { background: #1a86db; }
+.btn-danger { background: transparent; border: 1px solid #FF6B6B; color: #FF6B6B; flex: 0; padding: 0 16px; }
+.btn-danger:hover { background: #FF6B6B; color: white; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <span id="dialogTitle">添加任务</span>
+    <button class="close-btn" id="btnClose">✕</button>
+  </div>
+  <div class="body">
+    <div class="form-group">
+      <label>标题</label>
+      <input type="text" id="title" placeholder="任务标题..." autofocus>
+    </div>
+    <div class="form-group">
+      <label>备注</label>
+      <textarea id="notes" rows="2" placeholder="可选备注..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group half">
+        <label>截止日期</label>
+        <input type="date" id="deadline">
+      </div>
+      <div class="form-group half">
+        <label>循环</label>
+        <select id="recurring">
+          <option value="none">不循环</option>
+          <option value="weekly">每周</option>
+          <option value="monthly">每月</option>
+        </select>
+      </div>
+    </div>
+    <div class="recurring-options" id="weeklyOptions" style="display:none;">
+      <div class="weekday-buttons">
+        <button class="weekday-btn" data-day="1">一</button>
+        <button class="weekday-btn" data-day="2">二</button>
+        <button class="weekday-btn" data-day="3">三</button>
+        <button class="weekday-btn" data-day="4">四</button>
+        <button class="weekday-btn" data-day="5">五</button>
+        <button class="weekday-btn" data-day="6">六</button>
+        <button class="weekday-btn" data-day="0">日</button>
+      </div>
+    </div>
+    <div class="recurring-options" id="monthlyOptions" style="display:none;">
+      <input type="text" id="monthlyDates" placeholder="输入日期，如 1, 15">
+    </div>
+  </div>
+  <div class="footer">
+    <button class="btn btn-danger" id="btnDelete" style="display:none;">删除</button>
+    <button class="btn btn-primary" id="btnSubmit">添加</button>
+  </div>
+
+  <script>
+    const { mode, task } = window.dialogAPI.getInitData();
+
+    // 编辑模式：填充数据
+    if (mode === 'edit' && task) {
+      document.getElementById('dialogTitle').textContent = '编辑任务';
+      document.getElementById('btnSubmit').textContent = '保存';
+      document.getElementById('btnDelete').style.display = 'block';
+      document.getElementById('title').value = task.title || '';
+      document.getElementById('notes').value = task.notes || '';
+      document.getElementById('deadline').value = task.deadline || '';
+      if (task.recurring) {
+        document.getElementById('recurring').value = task.recurring.type;
+        if (task.recurring.type === 'weekly') {
+          document.getElementById('weeklyOptions').style.display = 'block';
+          (task.recurring.days || []).forEach(d => {
+            const b = document.querySelector('.weekday-btn[data-day="'+d+'"]');
+            if (b) b.classList.add('selected');
+          });
+        } else if (task.recurring.type === 'monthly') {
+          document.getElementById('monthlyOptions').style.display = 'block';
+          document.getElementById('monthlyDates').value = (task.recurring.dates || []).join(', ');
+        }
+      }
+    }
+
+    // 循环类型切换
+    document.getElementById('recurring').addEventListener('change', (e) => {
+      document.getElementById('weeklyOptions').style.display = e.target.value === 'weekly' ? 'block' : 'none';
+      document.getElementById('monthlyOptions').style.display = e.target.value === 'monthly' ? 'block' : 'none';
+    });
+
+    // 星期按钮
+    document.querySelectorAll('.weekday-btn').forEach(b => {
+      b.addEventListener('click', () => b.classList.toggle('selected'));
+    });
+
+    // 提交
+    function getFormData() {
+      const title = document.getElementById('title').value.trim();
+      if (!title) { document.getElementById('title').focus(); return null; }
+      const notes = document.getElementById('notes').value.trim();
+      const deadline = document.getElementById('deadline').value;
+      const rt = document.getElementById('recurring').value;
+      let recurring = null;
+      if (rt === 'weekly') {
+        const days = [];
+        document.querySelectorAll('.weekday-btn.selected').forEach(b => days.push(parseInt(b.dataset.day)));
+        if (days.length > 0) recurring = { type: 'weekly', days };
+      } else if (rt === 'monthly') {
+        const dates = document.getElementById('monthlyDates').value.split(/[,，\s]+/).map(Number).filter(n => n >= 1 && n <= 31);
+        if (dates.length > 0) recurring = { type: 'monthly', dates };
+      }
+      return { title, notes, deadline, recurring };
+    }
+
+    document.getElementById('btnSubmit').addEventListener('click', () => {
+      const data = getFormData();
+      if (data) window.dialogAPI.submit(data);
+    });
+
+    document.getElementById('btnDelete').addEventListener('click', () => {
+      window.dialogAPI.deleteTask();
+    });
+
+    document.getElementById('btnClose').addEventListener('click', () => {
+      window.dialogAPI.cancel();
+    });
+
+    // Enter 快速提交（仅在标题输入框）
+    document.getElementById('title').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const data = getFormData();
+        if (data) window.dialogAPI.submit(data);
+      }
+    });
+
+    // Escape 关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') window.dialogAPI.cancel();
+    });
+  </script>
+</body>
+</html>
